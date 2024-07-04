@@ -8,6 +8,7 @@ const app = express();
 const server = createServer(app);
 
 app.use(express.static("public"));
+app.use(express.json());
 app.use(gameRouter);
 
 const io = new Server(server, {
