@@ -3,10 +3,12 @@ import express from "express";
 import { Server } from "socket.io";
 import { createServer } from "node:http";
 import gameRouter from "./game/game-router";
+import cors from "cors";
 
 const app = express();
 const server = createServer(app);
 
+app.use(cors())
 app.use(express.static("public"));
 app.use(express.json());
 app.use(gameRouter);
