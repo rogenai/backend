@@ -35,7 +35,7 @@ function convertTypeString(type: string) {
   }
 }
 
-type Map = {
+export type Map = {
   map: number[][];
   id: string;
   difficulty: string;

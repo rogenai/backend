@@ -4,8 +4,8 @@ import { LevelController } from './level-controller';
 import { LevelService } from './level-service';
 
 const router = express.Router();
-const levelService = new LevelService();
-const levelController = new LevelController(levelService);
+export const levelService = new LevelService();
+export const levelController = new LevelController(levelService);
 
 router.post("/generate", levelController.generateLevel);
 router.get("/all", levelController.getAllLevels);

@@ -57,7 +57,7 @@ class UserService {
   }
 
   private generateJwt(user: IUser): string {
-    return jwt.sign({ id: user._id, email: user.email }, this.jwtSecret, { expiresIn: '1h' });
+    return jwt.sign({ id: user._id, email: user.email }, this.jwtSecret, { expiresIn: '7d' });
   }
 
   private generateRefreshToken(user: IUser): string {

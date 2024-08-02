@@ -8,6 +8,8 @@ import levelRouter from "./level/level-router";
 import cors from "cors";
 import connectDB from "./db";
 import { logger } from "./logger";
+import GameServer from "./game_server/server";
+import roomRouter from "./rooms/room-router";
 
 connectDB();
 
@@ -20,12 +22,15 @@ app.use(logger);
 app.use(gameRouter);
 app.use('/user', userRouter);
 app.use('/level', levelRouter);
+app.use('/room', roomRouter);
 
-const io = new Server(server, {
+export const io = new Server(server, {
   cors: {
     origin: "*"
   }
 });
+
+new GameServer(io);
 
 server.listen(process.env.PORT, () => {
   console.log(`server running at port ${process.env.PORT}`);
