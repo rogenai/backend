@@ -37,7 +37,6 @@ function doOverlap(rectA: Rect, rectB: Rect): boolean {
         && (Math.abs(rectA.y - rectB.y) < (Math.abs(rectA.height + rectB.height) / 2))
 }
 
-const VELOCITY = 1;
 const TILESIZE = 30;
 const entityWidth = 20;
 const entityHeight = 10;
@@ -47,6 +46,8 @@ export class Room {
     entities: Entity[] = [];
     players: Player[] = [];
     platforms: Platform[] = [];
+    spawnX: number = 0;
+    spawnY: number = 0;
 
     constructor(id: string, server: Server) {
         this.id = id;
@@ -77,28 +78,21 @@ export class Room {
             this.entities.forEach((entity) => {
                 if (entity.entity === 'player') return;
 
-                entity.velx = (Math.floor(Math.random() * 3) - 1) * VELOCITY;
-                entity.vely = (Math.floor(Math.random() * 3) - 1) * VELOCITY;
+                const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+                const choice = dirs[Math.floor(Math.random() * dirs.length)];
+                const deltaX = choice[0] * TILESIZE;
+                const deltaY = choice[1] * TILESIZE;
+
+                if (this.platforms.some((platform) => {
+                    return Math.abs(entity.x + deltaX - platform.x) < TILESIZE / 2 &&
+                        Math.abs(entity.y + deltaY - platform.y) < TILESIZE / 2;
+                })) return;
+
+                entity.x = entity.x + deltaX;
+                entity.y = entity.y + deltaY;
             });
+            server.emit('data', this.entities);
         }, 2000);
-
-        setInterval(() => {
-            this.entities.forEach((entity) => {
-                if (entity.entity === 'player') return;
-
-                if (!this.platforms.some((platform) => {
-                    const rectA = { x: entity.x + entity.velx, y: entity.y + entity.vely, width: entityWidth, height: entityHeight };
-                    const rectB = { x: platform.x, y: platform.y, width: TILESIZE, height: TILESIZE };
-                    return doOverlap(rectA, rectB);
-                })) {
-
-                    entity.x += entity.velx;
-                    entity.y += entity.vely;
-                }
-            });
-
-            server.to(this.id).emit('data', this.entities);
-        }, 10);
     }
 
     loadLevel(level: Map) {
@@ -120,6 +114,11 @@ export class Room {
                     });
                 }
 
+                if (map[i][j] === 3) {
+                    this.spawnX = i * tilesize + offset;
+                    this.spawnY = j * tilesize + offset;
+                }
+                
                 if (map[i][j] === 4) {
                     this.entities.push({
                         x: i * tilesize + offset,
@@ -176,7 +175,13 @@ export class Room {
         });
 
 
-        socket.emit('init', { entities: this.entities, id: userId });
+        socket.emit('init', { 
+            entities: this.entities, 
+            id: userId, platforms: 
+            this.platforms,
+            spawnX: this.spawnX,
+            spawnY: this.spawnY
+        });
 
         socket.broadcast.to(this.id).emit('join', {
             x: 0,
