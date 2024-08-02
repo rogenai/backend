@@ -10,6 +10,8 @@ type Entity = {
     entity: string;
     name: string;
     id: string;
+    velx: number;
+    vely: number;
 }
 
 type Player = {
@@ -18,10 +20,33 @@ type Player = {
     socket: Socket;
 }
 
+type Platform = {
+    x: number;
+    y: number;
+}
+
+type Rect = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+function doOverlap(rectA: Rect, rectB: Rect): boolean {
+    return Math.abs(rectA.x - rectB.x) < (Math.abs(rectA.width + rectB.width) / 2) 
+        && (Math.abs(rectA.y - rectB.y) < (Math.abs(rectA.height + rectB.height) / 2))
+}
+
+const VELOCITY = 1;
+const TILESIZE = 30;
+const entityWidth = 20;
+const entityHeight = 10;
+
 export class Room {
     id: string;
     entities: Entity[] = [];
     players: Player[] = [];
+    platforms: Platform[] = [];
 
     constructor(id: string, server: Server) {
         this.id = id;
@@ -36,17 +61,44 @@ export class Room {
                             let x = (player.x - entity.x) / mod;
                             let y = (player.y - entity.y) / mod;
     
-                            server.emit('action', { id: entity.id, x, y });
+                            server.to(this.id).emit('action', { id: entity.id, x, y });
                         }
                     }
                     else if (entity.entity === 'orc') {
                         if (mod <= 30) {
-                            server.emit('action', { id: entity.id });
+                            server.to(this.id).emit('action', { id: entity.id });
                         }
                     }
                 });
             });
-        }, 3000);
+        }, 2000);
+
+        setInterval(() => {
+            this.entities.forEach((entity) => {
+                if (entity.entity === 'player') return;
+
+                entity.velx = (Math.floor(Math.random() * 3) - 1) * VELOCITY;
+                entity.vely = (Math.floor(Math.random() * 3) - 1) * VELOCITY;
+            });
+        }, 2000);
+
+        setInterval(() => {
+            this.entities.forEach((entity) => {
+                if (entity.entity === 'player') return;
+
+                if (!this.platforms.some((platform) => {
+                    const rectA = { x: entity.x + entity.velx, y: entity.y + entity.vely, width: entityWidth, height: entityHeight };
+                    const rectB = { x: platform.x, y: platform.y, width: TILESIZE, height: TILESIZE };
+                    return doOverlap(rectA, rectB);
+                })) {
+
+                    entity.x += entity.velx;
+                    entity.y += entity.vely;
+                }
+            });
+
+            server.to(this.id).emit('data', this.entities);
+        }, 10);
     }
 
     loadLevel(level: Map) {
@@ -60,6 +112,8 @@ export class Room {
                     this.entities.push({
                         x: i * tilesize + offset,
                         y: j * tilesize + offset,
+                        velx: 0,
+                        vely: 0,
                         entity: 'orc',
                         name: 'Orc',
                         id: uuidv4()
@@ -70,9 +124,18 @@ export class Room {
                     this.entities.push({
                         x: i * tilesize + offset,
                         y: j * tilesize + offset,
+                        velx: 0,
+                        vely: 0,
                         entity: 'ranged_orc',
                         name: 'RangedOrc',
                         id: uuidv4()
+                    });
+                }
+
+                if (map[i][j] === 2) {
+                    this.platforms.push({
+                        x: i * tilesize + offset,
+                        y: j * tilesize + offset
                     });
                 }
             }
@@ -99,6 +162,8 @@ export class Room {
         this.entities.push({
             x: 0,
             y: 0,
+            velx: 0,
+            vely: 0,
             id: userId,
             entity: 'player',
             name: username,
