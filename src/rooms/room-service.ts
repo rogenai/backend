@@ -12,6 +12,7 @@ type Entity = {
     id: string;
     velx: number;
     vely: number;
+    health: number;
 }
 
 type Player = {
@@ -110,6 +111,7 @@ export class Room {
                         vely: 0,
                         entity: 'orc',
                         name: 'Orc',
+                        health: 100,
                         id: uuidv4()
                     });
                 }
@@ -127,6 +129,7 @@ export class Room {
                         vely: 0,
                         entity: 'ranged_orc',
                         name: 'RangedOrc',
+                        health: 100,
                         id: uuidv4()
                     });
                 }
@@ -165,6 +168,7 @@ export class Room {
             vely: 0,
             id: userId,
             entity: 'player',
+            health: 100,
             name: username,
         });
 
@@ -204,6 +208,31 @@ export class Room {
         socket.on('attack', () => {
             console.log('Attack', username);
             socket.broadcast.to(this.id).emit('action', { id: userId });
+        });
+
+        socket.on('damage', (data) => {
+            const ent = this.entities.find((ent) => ent.id === data.id);
+            if (!ent) {
+                console.log("Entity not found", data);
+                return;
+            }
+            ent.health -= data.damage;
+            socket.to(this.id).emit('data', this.entities);
+            socket.emit('data', this.entities);
+            if (ent.health <= 0) {
+                this.entities = this.entities.filter((val) => val.id !== ent.id);
+            }
+        });
+
+        socket.on('damage-got', (damage) => {
+            const ent = this.entities.find((ent) => ent.id === userId);
+            if (!ent) {
+                console.log("Player not found", userId);
+                return;
+            }
+            ent.health -= damage;
+            socket.to(this.id).emit('data', this.entities);
+            socket.emit('data', this.entities);
         });
 
         socket.on('disconnect', () => {
