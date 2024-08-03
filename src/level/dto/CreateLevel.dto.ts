@@ -1,3 +1,4 @@
 export interface CreateLevelDto {
-    difficulty: string
+    difficulty: string;
+    name: string
 }

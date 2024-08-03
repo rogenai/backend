@@ -12,5 +12,6 @@ export const roomProvider = new RoomProvider(roomService);
 router.get('/', roomProvider.getRooms);
 router.post('/create', roomProvider.createRoom);
 router.get('/exists/:id', roomProvider.exists);
+router.get('/:id', roomProvider.getRoom);
 
 export default router;

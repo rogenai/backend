@@ -60,7 +60,7 @@ export class LevelService {
     return exampleMap;
   }
 
-  async generateLocation(difficulty: string) {
+  async generateLocation(difficulty: string, name: string) {
     const map = await openaiservice.generateLocation(difficulty);
     const array = map.map;
     const entities = [];
@@ -78,13 +78,17 @@ export class LevelService {
     }
 
     return await new LevelSchema({
-      name: "level",
+      name,
       difficulty: difficulty,
       entities: entities
     }).save();
   }
 
   async getLevelById(id: string) {
+    if (id === 'tutorial') {
+      return this.getTutorialLevel();
+    }
+    
     const level = await LevelSchema.findById(id).exec();
     if (level !== null) {
       return convertData(level);

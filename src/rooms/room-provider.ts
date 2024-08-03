@@ -7,8 +7,7 @@ export class RoomProvider {
     createRoom = async (req: Request, res: Response) => {
         try {
             const { id } = req.body;
-            await this.service.createRoom(id);
-            res.status(200).send('Room created');
+            res.status(200).send(this.service.createRoom(id));
         }
         catch (e) {
             res.status(500).send(e);
@@ -30,6 +29,17 @@ export class RoomProvider {
         try {
             const rooms = this.service.getRooms();
             res.status(200).send(rooms);
+        }
+        catch (e: any) {
+            res.status(500).send(e.message);
+        }
+    }
+    
+    getRoom = async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const room = this.service.getRoomData(id);
+            res.status(200).send(room);
         }
         catch (e: any) {
             res.status(500).send(e.message);

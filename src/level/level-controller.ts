@@ -2,7 +2,6 @@ import { CreateLevelDto } from './dto/CreateLevel.dto';
 import { LevelService } from './level-service';
 import { Request, Response } from 'express';
 
-  
 export class LevelController {
   private levelService: LevelService;
 
@@ -13,7 +12,7 @@ export class LevelController {
   generateLevel = async (req: Request, res: Response) => {
     try {
       const body: CreateLevelDto = req.body;
-      const level = await this.levelService.generateLocation(body.difficulty);
+      const level = await this.levelService.generateLocation(body.difficulty, body.name);
       res.status(200).json(level);
     } catch (error: any) {
       res.status(500).json({ message: error.message });

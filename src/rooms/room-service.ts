@@ -248,22 +248,29 @@ export class RoomService {
 
     rooms: Room[] = [];
 
-    createRoom(roomId: string) {
-        if (this.rooms.some((room) => room.id === roomId)) return;
-        console.log("Creating room", roomId);
+    createRoom(levelId: string) {
+        console.log("Creating room", levelId);
+        const roomId = uuidv4();
         const room = new Room(roomId, io);
         this.rooms.push(room);
 
-        levelService.getLevelById(roomId).then((level) => {
+        levelService.getLevelById(levelId).then((level) => {
             if (level === null) {
                 throw new Error('Level not found');
             }
             room.loadLevel(level);
         });
+
+        return { id: roomId };
     }
 
     deleteRoom(roomId: string) {
         this.rooms = this.rooms.filter((room) => room.id !== roomId);
+    }
+
+    getRoomData(roomId: string) {
+        const { id, players } = this.rooms.find((room) => room.id === roomId)!;
+        return { id, players: players.map((player) => ({ id: player.id, name: player.name }) ) };
     }
 
     getRoom(roomId: string) {
@@ -275,11 +282,9 @@ export class RoomService {
     }
 
     getRooms() {
-        return this.rooms.map((room) => ({ id: room.id, entities: room.entities.map((player) => ({ 
-            name: player.name, 
-            x: player.x, 
-            y: player.y, 
-            id: player.id
-        })) }) );
+        return this.rooms.map((room) => ({ 
+            id: room.id, 
+            players: room.players.map((player) => ({ id: player.id, name: player.name }) ) 
+        }) );
     }
 }
